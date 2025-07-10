@@ -3,4 +3,10 @@ Flask-MySQLdb==1.0.1
 
 
 # cd backend
-# python app.py  
+# python app.py   
+
+# MySQL Config
+   # app.config['MYSQL_HOST'] = 'localhost'
+   # app.config['MYSQL_USER'] = 'root'
+  #  app.config['MYSQL_PASSWORD'] = 'SOMNATH21!'
+  #  app.config['MYSQL_DB'] = 'expense_management_tools_database'

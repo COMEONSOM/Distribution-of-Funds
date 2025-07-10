@@ -14,50 +14,35 @@ h1 {
   margin-bottom: 10px;
 }
 
-/* ============ Instruction Box for Users ============ */
-.instructions {
-  max-width: 800px;
-  margin: 10px auto 30px;
+/* ============ Auth Container ============ */
+.auth-container {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 30px 25px;
   background: #ffffff;
-  padding: 20px;
-  border-left: 6px solid #3498db;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  border-radius: 8px;
-  line-height: 1.6;
-  font-size: 0.95rem;
-}
-
-/* ============ Expense Form ============ */
-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  justify-content: center;
-  background: #ffffff;
-  padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  max-width: 900px;
-  margin: 0 auto 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-form input, form textarea {
-  flex: 1 1 250px;
-  padding: 10px;
+.auth-container h2 {
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  color: #2c3e50;
+  text-align: center;
+}
+
+.auth-container input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 15px;
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 1rem;
 }
 
-form textarea {
-  min-height: 100px;
-  resize: vertical;
-  font-family: 'Courier New', Courier, monospace;
-  background: #fdfdfd;
-}
-
-form button {
-  padding: 12px 24px;
+.auth-container button {
+  width: 100%;
+  padding: 12px;
   font-size: 1rem;
   font-weight: bold;
   background-color: #3498db;
@@ -68,65 +53,27 @@ form button {
   transition: background-color 0.3s ease;
 }
 
-form button:hover {
+.auth-container button:hover {
   background-color: #2980b9;
 }
 
-/* ============ Summary Table ============ */
-#summary {
-  max-width: 950px;
-  margin: 20px auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-}
-
-#summary table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-#summary th,
-#summary td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
+.auth-links {
   text-align: center;
+  margin-top: 15px;
+  font-size: 0.9rem;
 }
 
-#summary th {
-  background-color: #2c3e50;
-  color: white;
+.auth-links a {
+  color: #3498db;
+  text-decoration: none;
+  font-weight: bold;
 }
 
-#summary td {
-  background-color: #f9f9f9;
+.auth-links a:hover {
+  text-decoration: underline;
 }
 
-/* ============ Button for Summary Load ============ */
-button[onclick="loadSummary()"] {
-  display: block;
-  margin: 0 auto 20px;
-  padding: 10px 20px;
-  font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid #3498db;
-  background: #ecf5fc;
-  color: #2c3e50;
-  cursor: pointer;
-}
-
-button[onclick="loadSummary()"]:hover {
-  background-color: #d4eaf9;
-}
-
-/* ============ Responsive Fix ============ */
-@media (max-width: 600px) {
-  form {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
+/* ============ Auth Message ============ */
 .message {
   position: fixed;
   top: 20px;
@@ -150,4 +97,91 @@ button[onclick="loadSummary()"]:hover {
   10% { opacity: 1; transform: translateY(0); }
   90% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* ============ Instructions & Form Sections ============ */
+.instructions, form, .summary-section {
+  max-width: 900px;
+  margin: 20px auto;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.instructions {
+  border-left: 6px solid #3498db;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+}
+
+form input, form select, form textarea {
+  flex: 1 1 250px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+form button {
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: bold;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+form button:hover {
+  background-color: #2980b9;
+}
+
+/* ============ Summary Table ============ */
+#summary {
+  padding: 20px;
+  border-radius: 10px;
+}
+
+#summary table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#summary th,
+#summary td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
+
+#summary th {
+  background-color: #2c3e50;
+  color: white;
+}
+
+#summary td {
+  background-color: #f9f9f9;
+}
+
+/* ============ Responsive ============ */
+@media (max-width: 600px) {
+  form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .auth-container {
+    padding: 20px;
+    margin: 20px;
+  }
 }

@@ -9,6 +9,32 @@
 
   <h1>💸 Expense Distribution Tool</h1>
 
+  <!-- 🔐 LOGIN/REGISTER AREA -->
+  <section id="auth-section">
+    <div id="login-section">
+      <h2>🔐 Login</h2>
+      <input type="email" id="loginEmail" placeholder="Email" required />
+      <input type="password" id="loginPassword" placeholder="Password" required />
+      <button onclick="loginUser()">Login</button>
+    </div>
+
+    <div id="register-section">
+      <h2>📝 Register</h2>
+      <input type="text" id="registerName" placeholder="Name" required />
+      <input type="email" id="registerEmail" placeholder="Email" required />
+      <input type="password" id="registerPassword" placeholder="Password" required />
+      <button onclick="registerUser()">Register</button>
+    </div>
+
+    <div id="user-info" style="display: none;">
+      <p>👋 Logged in as <span id="userEmailDisplay"></span></p>
+      <button onclick="logoutUser()">Logout</button>
+    </div>
+
+    <div id="auth-message"></div>
+    <hr />
+  </section>
+
   <!-- 📘 User Guide -->
   <section class="instructions">
     <h3>📘 How to Use</h3>

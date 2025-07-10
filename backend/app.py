@@ -1,52 +1,124 @@
-from flask import Flask, request, jsonify, render_template
-from db_config import create_app
+from flask import Flask, request, jsonify, render_template, session
+from db_config import create_app, mysql
 from flask_cors import CORS
-import MySQLdb.cursors
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 
-app, mysql = create_app()
+app = create_app()
 CORS(app)
 
-# 🌐 Serve frontend
+# ---------------------- 🔐 AUTH HELPERS ----------------------
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user_email' not in session:
+            return jsonify({"success": False, "error": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+# ---------------------- 🌐 FRONTEND ----------------------
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
+# ---------------------- 🔐 REGISTER ----------------------
 
-# 📦 Get all users
+@app.route('/register', methods=['POST'])
+def register():
+    try:
+        data = request.get_json()
+        name = data.get('name', '').strip()
+        email = data.get('email', '').strip()
+        password = data.get('password', '')
+
+        if not name or not email or not password:
+            return jsonify({"success": False, "error": "All fields required."}), 400
+
+        password_hash = generate_password_hash(password)
+
+        cursor = mysql.connection.cursor()
+        cursor.execute("USE login_system_emt;")
+        cursor.execute(
+            "INSERT INTO login_users_emt (name, email, password_hash) VALUES (%s, %s, %s)",
+            (name, email, password_hash)
+        )
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({"success": True})
+    except Exception as e:
+        print("❌ Register Error:", e)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# ---------------------- 🔐 LOGIN ----------------------
+
+@app.route('/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        email = data.get('email', '').strip()
+        password = data.get('password', '')
+
+        cursor = mysql.connection.cursor()
+        cursor.execute("USE login_system_emt;")
+        cursor.execute("SELECT password_hash FROM login_users_emt WHERE email = %s", (email,))
+        result = cursor.fetchone()
+        cursor.close()
+
+        if result and check_password_hash(result[0], password):
+            session['user_email'] = email
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Invalid credentials."})
+    except Exception as e:
+        print("Login Error:", e)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('user_email', None)
+    return jsonify({"success": True})
+
+# ---------------------- 👥 USERS ----------------------
+
 @app.route('/users', methods=['GET'])
+@login_required
 def get_users():
     try:
         cursor = mysql.connection.cursor()
+        cursor.execute("USE expense_management_tools_database;")
         cursor.execute("SELECT name FROM users ORDER BY name")
         users = [{"name": row[0]} for row in cursor.fetchall()]
         cursor.close()
         return jsonify(users)
     except Exception as e:
-        print("Error fetching users:", e)
         return jsonify({"success": False, "error": str(e)})
 
-
-# ➕ Add new user
 @app.route('/add_user', methods=['POST'])
+@login_required
 def add_user():
     data = request.get_json()
     name = data.get('name', '').strip()
+
     if not name:
-        return jsonify({"success": False, "error": "Name is required."})
+        return jsonify({"success": False, "error": "Name is required"})
 
     try:
         cursor = mysql.connection.cursor()
+        cursor.execute("USE expense_management_tools_database;")
         cursor.execute("INSERT IGNORE INTO users (name) VALUES (%s)", (name,))
         mysql.connection.commit()
         cursor.close()
         return jsonify({"success": True})
     except Exception as e:
-        print("Error adding user:", e)
         return jsonify({"success": False, "error": str(e)})
 
+# ---------------------- 💸 ADD EXPENSE ----------------------
 
-# 🧾 Add new expense
 @app.route('/add_expense', methods=['POST'])
+@login_required
 def add_expense():
     data = request.get_json()
     title = data.get('title')
@@ -55,73 +127,54 @@ def add_expense():
     paid_by = data.get('paid_by')
     distribution = data.get('distribution', {})
 
-    if not title or not location or amount <= 0 or not paid_by or not distribution:
-        return jsonify({"success": False, "error": "Invalid input."})
-
     try:
         cursor = mysql.connection.cursor()
+        cursor.execute("USE expense_management_tools_database;")
 
-        # Get paid_by user_id
         cursor.execute("SELECT id FROM users WHERE name = %s", (paid_by,))
         paid_by_id = cursor.fetchone()
         if not paid_by_id:
-            return jsonify({"success": False, "error": "Payer not found."})
-
+            return jsonify({"success": False, "error": "Payer not found"})
         paid_by_id = paid_by_id[0]
 
-        # Insert expense
-        cursor.execute("""
-            INSERT INTO expenses (title, location, amount, paid_by)
-            VALUES (%s, %s, %s, %s)
-        """, (title, location, amount, paid_by_id))
+        cursor.execute(
+            "INSERT INTO expenses (title, location, amount, paid_by) VALUES (%s, %s, %s, %s)",
+            (title, location, amount, paid_by_id)
+        )
         expense_id = cursor.lastrowid
 
-        # Insert expense shares
-        for user_name, owed_amount in distribution.items():
-            cursor.execute("SELECT id FROM users WHERE name = %s", (user_name,))
+        for name, owed_amt in distribution.items():
+            cursor.execute("SELECT id FROM users WHERE name = %s", (name,))
             user_id = cursor.fetchone()
             if user_id:
-                user_id = user_id[0]
-                cursor.execute("""
-                    INSERT INTO expense_shares (expense_id, user_id, amount_owed)
-                    VALUES (%s, %s, %s)
-                """, (expense_id, user_id, owed_amount))
+                cursor.execute(
+                    "INSERT INTO expense_shares (expense_id, user_id, amount_owed) VALUES (%s, %s, %s)",
+                    (expense_id, user_id[0], owed_amt)
+                )
 
         mysql.connection.commit()
         cursor.close()
         return jsonify({"success": True})
-
     except Exception as e:
-        print("Error adding expense:", e)
         return jsonify({"success": False, "error": str(e)})
 
+# ---------------------- 📊 SUMMARY ----------------------
 
-# 📊 Get summary (pairwise settlements + totals)
 @app.route('/summary', methods=['GET'])
-def get_summary():
+@login_required
+def summary():
     try:
         cursor = mysql.connection.cursor()
+        cursor.execute("USE expense_management_tools_database;")
 
-        # 1. Get all users
         cursor.execute("SELECT id, name FROM users")
         user_map = {uid: name for uid, name in cursor.fetchall()}
-        name_to_id = {v: k for k, v in user_map.items()}
 
-        # 2. Get total paid by each user
-        cursor.execute("""
-            SELECT paid_by, SUM(amount) 
-            FROM expenses 
-            GROUP BY paid_by
-        """)
+        cursor.execute("SELECT paid_by, SUM(amount) FROM expenses GROUP BY paid_by")
         contributions = {user_map[uid]: float(paid) for uid, paid in cursor.fetchall()}
-
-        # Initialize all users with 0 paid
         for name in user_map.values():
             contributions.setdefault(name, 0.0)
 
-        total_expense = sum(contributions.values())
-
-        # 3. Get total owed by each user from expense_shares
         cursor.execute("""
             SELECT u.name, SUM(es.amount_owed)
             FROM expense_shares es
@@ -129,39 +182,35 @@ def get_summary():
             GROUP BY u.name
         """)
         owed = {name: float(amt) for name, amt in cursor.fetchall()}
-
-        # Initialize anyone who hasn’t owed anything
         for name in user_map.values():
             owed.setdefault(name, 0.0)
 
-        # 4. Calculate net balances = Paid - Owed
-        net_balances = {user: contributions[user] - owed[user] for user in user_map.values()}
+        net = {u: contributions[u] - owed[u] for u in user_map.values()}
+        total = sum(contributions.values())
 
-        # 5. Prepare net contributions table
         net_contribs = [
             {
-                "person": user,
-                "paid": round(contributions[user], 2),
-                "should_pay": round(owed[user], 2),
-                "net_balance": round(net_balances[user], 2)
+                "person": u,
+                "paid": round(contributions[u], 2),
+                "should_pay": round(owed[u], 2),
+                "net_balance": round(net[u], 2)
             }
-            for user in user_map.values()
+            for u in user_map.values()
         ]
 
-        # 6. Compute settlements
-        owe_list = sorted([(u, -amt) for u, amt in net_balances.items() if amt < -0.01], key=lambda x: x[1])
-        owed_list = sorted([(u, amt) for u, amt in net_balances.items() if amt > 0.01], key=lambda x: x[1])
+        owe_list = sorted([(u, -amt) for u, amt in net.items() if amt < -0.01], key=lambda x: x[1])
+        owed_list = sorted([(u, amt) for u, amt in net.items() if amt > 0.01], key=lambda x: x[1])
 
         settlements = []
         statements = []
-
         i = j = 0
+
         while i < len(owe_list) and j < len(owed_list):
             payer, amt_owe = owe_list[i]
             receiver, amt_owed = owed_list[j]
 
             settle_amt = round(min(amt_owe, amt_owed), 2)
-            if payer != receiver and settle_amt > 0:
+            if settle_amt > 0:
                 settlements.append({
                     "who_pays": payer,
                     "to_whom": receiver,
@@ -178,17 +227,16 @@ def get_summary():
                 j += 1
 
         return jsonify({
-            "total_expense": round(total_expense, 2),
+            "total_expense": round(total, 2),
             "contributions": [{"name": k, "paid": round(v, 2)} for k, v in contributions.items()],
             "net_contributions": net_contribs,
             "settlements_table": settlements,
             "settlements_statements": statements
         })
-
     except Exception as e:
-        print("Error in /summary:", e)
         return jsonify({"success": False, "error": str(e)})
 
+# ---------------------- 🚀 RUN ----------------------
 
 if __name__ == '__main__':
     app.run(debug=True)
