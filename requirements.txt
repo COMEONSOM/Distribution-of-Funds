@@ -2,7 +2,9 @@ Flask==2.3.2
 Flask-MySQLdb==1.0.1
 gunicorn
 mysqlclient
+flask-cors
 python-dotenv
+Werkzeug
 
 
 # cd backend
