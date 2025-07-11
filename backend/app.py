@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template, session
-from db_config import create_app, mysql
+from backend.db_config import create_app, mysql
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
