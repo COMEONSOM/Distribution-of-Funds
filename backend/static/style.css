@@ -293,3 +293,14 @@ header.header {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ───────── Footer ───────── */
+.site-footer {
+  background: var(--white);
+  text-align: center;
+  padding: 2rem 1rem;
+  margin-top: var(--section-gap);
+  font-size: 0.9rem;
+  color: var(--muted-text);
+  border-top: 1px solid #ddd;
+}

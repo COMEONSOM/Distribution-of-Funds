@@ -9,6 +9,8 @@ Werkzeug
 
 # cd backend
 # python app.py   
+# python -m backend.app
+
 
 # MySQL Config
    # app.config['MYSQL_HOST'] = 'localhost'
