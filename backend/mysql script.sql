@@ -1,7 +1,7 @@
--- 🔄 Safer drop first (only if needed manually)
+-- 🔄 Drop DB if exists
 DROP DATABASE IF EXISTS expense_management_tools_database;
 
--- ✅ Create & Use the database
+-- ✅ Create DB
 CREATE DATABASE expense_management_tools_database;
 USE expense_management_tools_database;
 
@@ -14,11 +14,10 @@ CREATE TABLE users (
 -- ✅ Table: expenses
 CREATE TABLE expenses (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,         -- What was the expense for?
-    amount FLOAT NOT NULL,               -- Total amount paid
-    paid_by INT NOT NULL,                -- FK: Who paid
-    location VARCHAR(255),               -- Where it was spent
-    group_size INT,                      -- Optional: number of people
+    title VARCHAR(255) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    paid_by INT NOT NULL,
+    location VARCHAR(255),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (paid_by) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -26,27 +25,27 @@ CREATE TABLE expenses (
 -- ✅ Table: expense_shares
 CREATE TABLE expense_shares (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    expense_id INT NOT NULL,             -- FK: which expense
-    user_id INT NOT NULL,                -- FK: who owes
-    amount_owed FLOAT NOT NULL,          -- How much owed
+    expense_id INT NOT NULL,
+    user_id INT NOT NULL,
+    amount_owed DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- ✅ View: detailed per-expense settlements
+-- ✅ View: Detailed settlements
 CREATE OR REPLACE VIEW user_pairwise_settlements AS
 SELECT
-    p.name AS payer_name,                -- The one who paid
-    o.name AS receiver_name,             -- The one who owes
-    e.title AS expense_title,            -- Expense name
-    s.amount_owed                        -- Amount owed
+    p.name AS payer_name,
+    o.name AS receiver_name,
+    e.title AS expense_title,
+    s.amount_owed
 FROM expense_shares s
-JOIN users o ON s.user_id = o.id         -- The person who owes
+JOIN users o ON s.user_id = o.id
 JOIN expenses e ON s.expense_id = e.id
-JOIN users p ON e.paid_by = p.id         -- The person who paid
+JOIN users p ON e.paid_by = p.id
 ORDER BY p.name, o.name, e.created_at;
 
--- ✅ View: final settlement totals per payer-receiver
+-- ✅ View: Total settlements
 CREATE OR REPLACE VIEW user_settlement_totals AS
 SELECT
     payer_name,
@@ -55,3 +54,10 @@ SELECT
 FROM user_pairwise_settlements
 GROUP BY payer_name, receiver_name
 ORDER BY payer_name, receiver_name;
+
+-- 🔥 Indexes for performance
+CREATE INDEX idx_paid_by ON expenses(paid_by);
+CREATE INDEX idx_expense_shares ON expense_shares(expense_id, user_id);
+
+-- ✅ Test
+SHOW TABLES;

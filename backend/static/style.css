@@ -1,187 +1,295 @@
-/* ============ Global Layout ============ */
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+/* ================================
+🎨 Root Variables (Theme Colors)
+================================= */
+:root {
+  --color-bg: #f5f7fa;
+  --color-text: #333;
+  --color-primary: #4f46e5; /* Indigo */
+  --color-primary-dark: #4338ca;
+  --color-success: #10b981; /* Emerald */
+  --color-success-dark: #059669;
+  --color-danger: #ef4444; /* Red */
+  --color-danger-dark: #dc2626;
+  --color-light-gray: #e5e7eb;
+  --color-dark-gray: #6b7280;
+  --color-input-border: #ccc;
+  --color-input-focus: var(--color-primary);
+  --color-card-bg: #fff;
+  --color-card-shadow: rgba(0, 0, 0, 0.08);
+  --color-modal-backdrop: rgba(0, 0, 0, 0.5);
+  --radius-small: 6px;
+  --radius-medium: 8px;
+  --radius-large: 12px;
+  --transition-speed: 0.3s;
+  --max-width: 800px;
+  --font-family: 'Inter', sans-serif;
+}
+
+/* ================================
+🌐 Global Reset and Base Styles
+================================= */
+* {
   margin: 0;
-  padding: 20px;
-  background: #f0f4f8;
-  color: #333;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: var(--font-family);
 }
 
-/* ============ Main Heading ============ */
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  min-height: 100vh;
+}
+
+/* ================================
+📌 Typography
+================================= */
+h1, h2 {
+  color: #222;
+  margin-bottom: 0.5rem;
+}
+
 h1 {
-  text-align: center;
-  color: #2c3e50;
-  margin-bottom: 10px;
+  font-size: 1.8rem;
+  font-weight: 600;
 }
 
-/* ============ Auth Container ============ */
-.auth-container {
-  max-width: 400px;
-  margin: 40px auto;
-  padding: 30px 25px;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+h2 {
+  font-size: 1.4rem;
+  font-weight: 500;
 }
 
-.auth-container h2 {
-  margin-bottom: 20px;
-  font-size: 1.5rem;
-  color: #2c3e50;
-  text-align: center;
-}
-
-.auth-container input {
-  width: 100%;
-  padding: 10px 12px;
-  margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
-}
-
-.auth-container button {
-  width: 100%;
-  padding: 12px;
-  font-size: 1rem;
-  font-weight: bold;
-  background-color: #3498db;
-  color: white;
+/* ================================
+🔘 Buttons
+================================= */
+button {
+  background: var(--color-primary);
+  color: #fff;
   border: none;
-  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-medium);
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background var(--transition-speed) ease-in-out, transform 0.1s ease;
 }
 
-.auth-container button:hover {
-  background-color: #2980b9;
+button:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
 }
 
-.auth-links {
-  text-align: center;
-  margin-top: 15px;
+button:active {
+  transform: scale(0.98);
+}
+
+.back-btn {
+  background: var(--color-light-gray);
+  color: var(--color-text);
+}
+
+.back-btn:hover {
+  background: #d1d5db;
+}
+
+#authTrigger {
+  background: var(--color-success);
   font-size: 0.9rem;
 }
 
-.auth-links a {
-  color: #3498db;
-  text-decoration: none;
-  font-weight: bold;
+#authTrigger:hover {
+  background: var(--color-success-dark);
 }
 
-.auth-links a:hover {
+.delete-btn {
+  background: var(--color-danger);
+}
+
+.delete-btn:hover {
+  background: var(--color-danger-dark);
+}
+
+/* ================================
+🔗 Links
+================================= */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
   text-decoration: underline;
 }
 
-/* ============ Auth Message ============ */
-.message {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 12px 20px;
-  border-radius: 6px;
-  color: #fff;
-  font-weight: bold;
-  z-index: 9999;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-  animation: fadeInOut 3s ease forwards;
-}
-.message.success {
-  background-color: #28a745;
-}
-.message.error {
-  background-color: #dc3545;
-}
-@keyframes fadeInOut {
-  0% { opacity: 0; transform: translateY(-20px); }
-  10% { opacity: 1; transform: translateY(0); }
-  90% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-20px); }
-}
-
-/* ============ Instructions & Form Sections ============ */
-.instructions, form, .summary-section {
-  max-width: 900px;
-  margin: 20px auto;
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.instructions {
-  border-left: 6px solid #3498db;
-  line-height: 1.6;
-  font-size: 0.95rem;
-}
-
-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  justify-content: center;
-}
-
-form input, form select, form textarea {
-  flex: 1 1 250px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
-}
-
-form button {
-  padding: 12px 24px;
-  font-size: 1rem;
-  font-weight: bold;
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-form button:hover {
-  background-color: #2980b9;
-}
-
-/* ============ Summary Table ============ */
-#summary {
-  padding: 20px;
-  border-radius: 10px;
-}
-
-#summary table {
+/* ================================
+📥 Inputs and Selects
+================================= */
+input, select {
   width: 100%;
-  border-collapse: collapse;
+  padding: 0.5rem;
+  margin-top: 0.3rem;
+  margin-bottom: 0.8rem;
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-small);
+  transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
 }
 
-#summary th,
-#summary td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-  text-align: center;
+input:focus, select:focus {
+  border-color: var(--color-input-focus);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
 }
 
-#summary th {
-  background-color: #2c3e50;
-  color: white;
+/* ================================
+📦 Layout: Header
+================================= */
+header.header {
+  width: 100%;
+  max-width: var(--max-width);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-#summary td {
-  background-color: #f9f9f9;
+/* ================================
+📦 Layout: Main Content & Cards
+================================= */
+.main-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  width: 100%;
+  max-width: var(--max-width);
 }
 
-/* ============ Responsive ============ */
-@media (max-width: 600px) {
-  form {
-    flex-direction: column;
-    align-items: stretch;
+.card {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-large);
+  padding: 1rem;
+  box-shadow: 0 4px 12px var(--color-card-shadow);
+}
+
+.inline-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.small-list, .summary-box {
+  background: #f1f5f9;
+  border-radius: var(--radius-small);
+  padding: 0.8rem;
+  color: var(--color-dark-gray);
+}
+
+.summary-box {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* ================================
+🔐 Auth Modal
+================================= */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--color-modal-backdrop);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+}
+
+.modal.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.modal-content {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-large);
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  position: relative;
+  animation: fadeSlideUp var(--transition-speed) ease;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
   }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 
-  .auth-container {
-    padding: 20px;
-    margin: 20px;
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 1.5rem;
+  color: var(--color-dark-gray);
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: var(--color-text);
+}
+
+.step {
+  display: none;
+}
+
+.step.active {
+  display: block;
+}
+
+/* ================================
+🔔 Toast Notifications
+================================= */
+.toast {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-medium);
+  margin-top: 0.5rem;
+  animation: fadeInOut 4s forwards;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.toast.error {
+  background: var(--color-danger);
+}
+
+.toast.success {
+  background: var(--color-success);
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+/* ================================
+📱 Responsive
+================================= */
+@media (min-width: 600px) {
+  .main-content {
+    grid-template-columns: 1fr 1fr;
   }
 }

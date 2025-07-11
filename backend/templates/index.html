@@ -2,107 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Expense Distribution</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Distribution Tool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
+  <header class="header">
+    <h1>💸 Expense Tool</h1>
+    <button id="authTrigger" type="button" onclick="openAuthModal()">👤 Login / Register</button>
+  </header>
 
-  <h1>💸 Expense Distribution Tool</h1>
-
-  <!-- 🔐 LOGIN/REGISTER AREA -->
-  <section id="auth-section">
-    <div id="login-section">
-      <h2>🔐 Login</h2>
-      <input type="email" id="loginEmail" placeholder="Email" required />
-      <input type="password" id="loginPassword" placeholder="Password" required />
-      <button onclick="loginUser()">Login</button>
-    </div>
-
-    <div id="register-section">
-      <h2>📝 Register</h2>
-      <input type="text" id="registerName" placeholder="Name" required />
-      <input type="email" id="registerEmail" placeholder="Email" required />
-      <input type="password" id="registerPassword" placeholder="Password" required />
-      <button onclick="registerUser()">Register</button>
-    </div>
-
-    <div id="user-info" style="display: none;">
-      <p>👋 Logged in as <span id="userEmailDisplay"></span></p>
-      <button onclick="logoutUser()">Logout</button>
-    </div>
-
-    <div id="auth-message"></div>
-    <hr />
-  </section>
-
-  <!-- 📘 User Guide -->
-  <section class="instructions">
-    <h3>📘 How to Use</h3>
-    <ul>
-      <li>Fill in expense details (title, location, amount).</li>
-      <li>Add users involved in this expense.</li>
-      <li>Select who paid for the expense from the added users.</li>
-      <li>Assign how much each user owes (default can auto-fill equally).</li>
-      <li>Submit to save the expense and split amounts.</li>
-    </ul>
-  </section>
-
-  <!-- 🧾 Expense Entry Form -->
-  <section class="form-section">
-    <form id="expenseForm">
-      <div class="form-group">
-        <label for="title">Expense Title:</label>
-        <input type="text" name="title" id="title" placeholder="e.g. Lunch at Cafe" required />
-      </div>
-
-      <div class="form-group">
-        <label for="location">Location:</label>
-        <input type="text" name="location" id="location" placeholder="e.g. Downtown Cafe" required />
-      </div>
-
-      <div class="form-group">
-        <label for="amount">Amount:</label>
-        <input type="number" name="amount" id="amount" placeholder="e.g. 1200" step="0.01" required />
-      </div>
-
-      <!-- 👥 Add Users -->
-      <div class="form-group">
-        <label>Add Users:</label>
-        <div id="userInputSection">
-          <input type="text" id="newUserName" placeholder="Enter user name" />
-          <button type="button" id="addUserBtn" onclick="addUser()">+ Add User</button>
+  <!-- 🔐 AUTH MODAL -->
+  <div id="authModal" class="modal hidden" onclick="modalBackgroundClick(event)">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeAuthModal()">&times;</span>
+      
+      <!-- Step: Welcome -->
+      <div id="authStep" class="step">
+        <h2>👋 Welcome</h2>
+        <p>Select an option to continue:</p>
+        <div class="button-group">
+          <button type="button" class="primary-btn" onclick="showStep('login')">🔐 Login</button>
+          <button type="button" class="primary-btn" onclick="showStep('register')">📝 Register</button>
         </div>
-        <ul id="userList"></ul>
       </div>
 
-      <!-- 👤 Paid By Dropdown -->
-      <div class="form-group">
-        <label for="paid_by">Who Paid?</label>
-        <select name="paid_by" id="paid_by" required>
-          <option value="">-- Select Paid By --</option>
+      <!-- Step: Login -->
+      <div id="loginStep" class="step hidden">
+        <h2>🔐 Login</h2>
+        <input type="email" id="loginEmail" placeholder="Email" required />
+        <input type="password" id="loginPassword" placeholder="Password" required />
+        <button type="button" class="primary-btn" onclick="loginUser()">✅ Login</button>
+        <p><a href="#" onclick="showStep('forgot')">Forgot Password?</a></p>
+        <button type="button" class="back-btn" onclick="showStep('welcome')">← Back</button>
+      </div>
+
+      <!-- Step: Register -->
+      <div id="registerStep" class="step hidden">
+        <h2>📝 Register</h2>
+        <input type="text" id="registerName" placeholder="Full Name" required />
+        <input type="email" id="registerEmail" placeholder="Email" required />
+        <input type="password" id="registerPassword" placeholder="Password" required />
+        <button type="button" class="primary-btn" onclick="registerUser()">✅ Register</button>
+        <button type="button" class="back-btn" onclick="showStep('welcome')">← Back</button>
+      </div>
+
+      <!-- Step: Forgot Password -->
+      <div id="forgotStep" class="step hidden">
+        <h2>🔑 Reset Password</h2>
+        <input type="email" id="forgotEmail" placeholder="Your Email" required />
+        <button type="button" class="primary-btn" onclick="forgotPassword()">📧 Send Reset Link</button>
+        <button type="button" class="back-btn" onclick="showStep('login')">← Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🧾 Expense Form -->
+  <main class="main-content">
+    <section class="card">
+      <h2>➕ Add Expense</h2>
+      <form id="expenseForm">
+        <input type="text" id="title" placeholder="What was it for? e.g. Lunch" required />
+        <input type="text" id="location" placeholder="Where? e.g. Dada Boudi Biriyani" required />
+        <input type="number" id="amount" placeholder="Amount e.g. 1200" step="0.01" required />
+
+        <div class="inline-group">
+          <input type="text" id="newUserName" placeholder="Add Members" />
+          <button type="button" onclick="addUser()">+ Add</button>
+        </div>
+        <div id="userList" class="small-list"></div>
+
+        <select id="paid_by" required>
+          <option value="">Who Paid?</option>
         </select>
+
+        <div id="owedAmounts" class="small-list"></div>
+        <button type="submit" class="primary-btn">💾 Save Expense</button>
+      </form>
+    </section>
+
+    <!-- 📊 Summary -->
+    <section class="card">
+      <h2>📊 Summary</h2>
+      <div class="inline-group">
+        <button type="button" class="primary-btn" onclick="loadSummary()">🔄 Refresh Summary</button>
+        <button type="button" class="delete-btn" onclick="deleteHistory()">🗑️ Delete History</button>
       </div>
+      <div id="summary" class="summary-box"></div>
+    </section>
+  </main>
 
-      <!-- 💵 User Owed Amount Inputs -->
-      <div class="form-group">
-        <label>Owed Amounts:</label>
-        <div id="owedAmounts"></div>
-      </div>
-
-      <!-- ✅ Submit Button -->
-      <div class="form-group">
-        <button type="submit" id="submitExpenseBtn">➕ Add Expense</button>
-      </div>
-    </form>
-  </section>
-
-  <!-- 📊 Summary Section -->
-  <section class="summary-section">
-    <h2>📊 Expense Summary</h2>
-    <button onclick="loadSummary()">🔄 Load Summary</button>
-    <div id="summary"></div>
-  </section>
-
+  <div id="toast-container"></div>
   <script src="/static/script.js"></script>
 </body>
 </html>
