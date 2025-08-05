@@ -1,4 +1,9 @@
 // ============================
+// 🌐 BASE URL (Auto for Local + Render)
+// ============================
+const API_BASE = window.location.origin;
+
+// ============================
 // 🌟 GLOBAL VARIABLES & CACHES
 // ============================
 let users = new Set();
@@ -12,50 +17,39 @@ const userListContainer = document.getElementById('userList');
 // ============================
 // 🔁 AUTH MODAL CONTROLS
 // ============================
-
-// Open the authentication modal
 function openAuthModal() {
   authModal.classList.remove('hidden');
-  showStep('welcome'); // Start at welcome step
+  showStep('welcome');
 }
 
-// Close the authentication modal
 function closeAuthModal() {
   authModal.classList.add('hidden');
 }
 
-// Handle clicks on modal background to close
 function modalBackgroundClick(event) {
   if (event.target.classList.contains('modal')) {
     closeAuthModal();
   }
 }
 
-// Handle ESC key to close modal
 document.addEventListener('keydown', (e) => {
   if (e.key === "Escape" && !authModal.classList.contains('hidden')) {
     closeAuthModal();
   }
 });
 
-// Show a specific auth step (welcome, login, register, forgot)
 function showStep(step) {
   document.querySelectorAll('.step, #authStep').forEach(div => {
-    div.classList.add('hidden'); // Hide all steps
-    div.classList.remove('active'); // Remove active class
+    div.classList.add('hidden');
+    div.classList.remove('active');
   });
 
-  if (step === 'welcome') {
-    const welcomeStep = document.getElementById('authStep');
-    welcomeStep.classList.remove('hidden');
-    welcomeStep.classList.add('active');
-  } else {
-    const targetStep = document.getElementById(step + 'Step');
-    targetStep.classList.remove('hidden');
-    targetStep.classList.add('active');
+  const target = step === 'welcome' ? document.getElementById('authStep') : document.getElementById(step + 'Step');
+  if (target) {
+    target.classList.remove('hidden');
+    target.classList.add('active');
   }
 }
-
 
 // ============================
 // 🔐 REGISTER USER
@@ -70,7 +64,7 @@ async function registerUser() {
   }
 
   try {
-    const res = await fetch("/register", {
+    const res = await fetch(`${API_BASE}/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -83,7 +77,7 @@ async function registerUser() {
     }
 
     showToast("✅ Registration successful! Please login.", "success");
-    showStep('login'); // Move to login step
+    showStep('login');
 
   } catch (err) {
     console.error("Registration Error:", err);
@@ -97,13 +91,17 @@ async function registerUser() {
 async function loginUser() {
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value.trim();
+  const loginBtn = document.getElementById("loginBtn");
 
   if (!email || !password) {
     return showToast("⚠ Enter email and password", "error");
   }
 
+  loginBtn.disabled = true;
+  loginBtn.textContent = "Logging in...";
+
   try {
-    const res = await fetch("/login", {
+    const res = await fetch(`${API_BASE}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -111,6 +109,9 @@ async function loginUser() {
     });
 
     const result = await res.json();
+    loginBtn.disabled = false;
+    loginBtn.textContent = "Login";
+
     if (!res.ok || !result.success) {
       return showToast(`❌ Login failed: ${result.error || res.status}`, "error");
     }
@@ -121,6 +122,8 @@ async function loginUser() {
     await loadSummary();
 
   } catch (err) {
+    loginBtn.disabled = false;
+    loginBtn.textContent = "Login";
     console.error("Login Error:", err);
     showToast("❌ Network error during login.", "error");
   }
@@ -137,7 +140,7 @@ async function forgotPassword() {
   }
 
   try {
-    const res = await fetch("/forgot_password", {
+    const res = await fetch(`${API_BASE}/forgot_password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -162,9 +165,12 @@ async function forgotPassword() {
 // ============================
 async function logoutUser() {
   try {
-    const res = await fetch("/logout", { method: "POST", credentials: "include" });
-    const result = await res.json();
+    const res = await fetch(`${API_BASE}/logout`, {
+      method: "POST",
+      credentials: "include"
+    });
 
+    const result = await res.json();
     if (!res.ok || !result.success) {
       return showToast("❌ Logout failed.", "error");
     }
@@ -172,6 +178,7 @@ async function logoutUser() {
     users.clear();
     summaryDiv.innerHTML = "";
     showToast("👋 Logged out successfully!", "success");
+    openAuthModal();
 
   } catch (err) {
     console.error("Logout Error:", err);
@@ -182,8 +189,6 @@ async function logoutUser() {
 // ============================
 // 👥 USER MANAGEMENT
 // ============================
-
-// Add a new user to the trip
 async function addUser() {
   const nameInput = document.getElementById('newUserName');
   const name = nameInput.value.trim();
@@ -193,7 +198,7 @@ async function addUser() {
   }
 
   try {
-    const res = await fetch('/add_user', {
+    const res = await fetch(`${API_BASE}/add_user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -201,9 +206,7 @@ async function addUser() {
     });
 
     const result = await res.json();
-    if (!res.ok || !result.success) {
-      throw new Error(result.error || res.status);
-    }
+    if (!res.ok || !result.success) throw new Error(result.error || res.status);
 
     users.add(name);
     updatePaidByDropdown();
@@ -217,12 +220,16 @@ async function addUser() {
   }
 }
 
-// Load existing users from server
 async function loadUsers() {
   try {
-    const res = await fetch('/users', { credentials: "include" });
-    const data = await res.json();
+    const res = await fetch(`${API_BASE}/users`, { credentials: "include" });
 
+    if (res.status === 401) {
+      openAuthModal();
+      return showToast("⚠ Session expired. Please login again.", "error");
+    }
+
+    const data = await res.json();
     if (!res.ok || !Array.isArray(data)) throw new Error(`HTTP ${res.status}`);
 
     users = new Set(data.map(u => u.name));
@@ -235,7 +242,6 @@ async function loadUsers() {
   }
 }
 
-// Update "Who Paid?" dropdown
 function updatePaidByDropdown() {
   paidByDropdown.innerHTML = '<option value="">Who Paid?</option>';
   users.forEach(name => {
@@ -246,7 +252,6 @@ function updatePaidByDropdown() {
   });
 }
 
-// Render user owed amount inputs
 function renderUserList() {
   userListContainer.innerHTML = "";
   users.forEach(name => {
@@ -295,7 +300,7 @@ document.getElementById('expenseForm').addEventListener('submit', async function
   }
 
   try {
-    const res = await fetch('/add_expense', {
+    const res = await fetch(`${API_BASE}/add_expense`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -303,9 +308,7 @@ document.getElementById('expenseForm').addEventListener('submit', async function
     });
 
     const result = await res.json();
-    if (!res.ok || !result.success) {
-      throw new Error(result.error || res.status);
-    }
+    if (!res.ok || !result.success) throw new Error(result.error || res.status);
 
     showToast("✅ Expense saved!", "success");
     this.reset();
@@ -323,9 +326,14 @@ document.getElementById('expenseForm').addEventListener('submit', async function
 // ============================
 async function loadSummary() {
   try {
-    const res = await fetch('/summary', { credentials: "include" });
-    const data = await res.json();
+    const res = await fetch(`${API_BASE}/summary`, { credentials: "include" });
 
+    if (res.status === 401) {
+      openAuthModal();
+      return showToast("⚠ Session expired. Please login again.", "error");
+    }
+
+    const data = await res.json();
     if (!res.ok || data.success === false) {
       summaryDiv.innerHTML = "<p>❌ Failed to load summary.</p>";
       return;
@@ -339,9 +347,8 @@ async function loadSummary() {
   }
 }
 
-// Build summary HTML for display
 function renderSummaryHTML(data) {
-  const { total_expense, net_contributions, settlements_table, settlements_statements } = data;
+  const { total_expense, net_contributions, settlements_statements } = data;
 
   return `
     <h3>💰 Total: ₹${total_expense.toFixed(2)}</h3>
@@ -354,7 +361,7 @@ function renderSummaryHTML(data) {
 }
 
 // ============================
-// 🗑️ Delete All History
+// 🗑️ DELETE HISTORY
 // ============================
 async function deleteHistory() {
   if (!confirm("⚠️ Are you sure? This will permanently delete all your expenses.")) {
@@ -362,13 +369,12 @@ async function deleteHistory() {
   }
 
   try {
-    const res = await fetch('/delete_history', {
+    const res = await fetch(`${API_BASE}/delete_history`, {
       method: "POST",
       credentials: "include",
     });
 
     const result = await res.json();
-
     if (!res.ok || !result.success) {
       return showToast(`❌ Delete failed: ${result.error || res.status}`, "error");
     }
@@ -379,6 +385,7 @@ async function deleteHistory() {
     users.clear();
     updatePaidByDropdown();
     renderUserList();
+
   } catch (err) {
     console.error("Delete History Error:", err);
     showToast("❌ Network or server error during delete.", "error");
