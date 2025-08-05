@@ -5,7 +5,7 @@ mysqlclient
 flask-cors
 python-dotenv
 Werkzeug
-
+mysql-connector-python
 
 # cd backend
 # python app.py   
