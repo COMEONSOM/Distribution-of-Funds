@@ -1,11 +1,13 @@
 from dotenv import load_dotenv
-load_dotenv()
-
+import os
+import mysql.connector
 from flask import Flask
 from flask_mysqldb import MySQL
-import mysql.connector
-import os
 
+# Load .env variables
+load_dotenv()
+
+# Initialize Flask-MySQLdb instance
 mysql = MySQL()
 
 def create_app():
@@ -17,21 +19,42 @@ def create_app():
     app.config['MYSQL_PORT'] = int(os.getenv('DB_PORT', 3306))
     app.config['MYSQL_USER'] = os.getenv('DB_USER')
     app.config['MYSQL_PASSWORD'] = os.getenv('DB_PASSWORD')
-    app.config['MYSQL_DB'] = os.getenv('DB_NAME')  # This can be login_system_emt
-    app.config['MYSQL_SSL_CA'] = os.path.join(os.path.dirname(__file__), 'ca.pem')
+    app.config['MYSQL_DB'] = os.getenv('DB_NAME')  # e.g., login_system_emt
 
+    # Optional: Use SSL certificate for secure connection (Aiven)
+    ca_path = os.path.join(os.path.dirname(__file__), 'ca.pem')
+    if os.path.exists(ca_path):
+        app.config['MYSQL_SSL_CA'] = ca_path
+
+    # Initialize Flask-MySQLdb
     mysql.init_app(app)
+
     return app
 
 def get_db_connection():
+    """
+    Returns a connection object for the login system (Flask-MySQLdb).
+    Usage: cursor = get_db_connection().cursor()
+    """
     return mysql.connection
 
 def get_expense_db_connection():
-    return mysql.connector.connect(
-        host=os.getenv('DB_HOST'),
-        port=int(os.getenv('DB_PORT')),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        database=os.getenv('DB_NAME_EXPENSE'),
-        ssl_ca=os.path.join(os.path.dirname(__file__), 'ca.pem')
-    )
+    """
+    Returns a MySQL Connector connection object for expense system.
+    Usage: cursor = get_expense_db_connection().cursor(dictionary=True)
+    """
+    ca_path = os.path.join(os.path.dirname(__file__), 'ca.pem')
+
+    try:
+        connection = mysql.connector.connect(
+            host=os.getenv('DB_HOST'),
+            port=int(os.getenv('DB_PORT', 3306)),
+            user=os.getenv('DB_USER'),
+            password=os.getenv('DB_PASSWORD'),
+            database=os.getenv('DB_NAME_EXPENSE'),  # e.g., expense_management_tools_database
+            ssl_ca=ca_path if os.path.exists(ca_path) else None
+        )
+        return connection
+    except mysql.connector.Error as err:
+        print(f"[DB ERROR] Expense DB connection failed: {err}")
+        return None
