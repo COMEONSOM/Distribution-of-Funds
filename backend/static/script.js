@@ -1,6 +1,7 @@
 // ============================
 // 🌐 BASE URL (Auto for Local + Render)
 // ============================
+const backendUrl = "https://distribution-of-funds.onrender.com";
 const API_BASE = window.location.origin;
 
 // ============================
@@ -64,25 +65,30 @@ async function registerUser() {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ name, email, password })
+    const response = await fetch(`${backendUrl}/login`, {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
-    const result = await res.json();
-    if (!res.ok || !result.success) {
-      return showToast(`❌ Registration failed: ${result.error || res.status}`, "error");
+    if (!response.ok) {
+      throw new Error(`Server responded with status ${response.status}`);
     }
 
-    showToast("✅ Registration successful! Please login.", "success");
-    showStep('login');
+    const data = await response.json();  // this can fail if server sends HTML
 
+    if (data.status === 'success') {
+      // proceed
+    } else {
+      showToast(data.message);
+    }
   } catch (err) {
-    console.error("Registration Error:", err);
-    showToast("❌ Network error during registration.", "error");
+      console.error("Login Error:", err);
+      showToast("Something went wrong during login. Please try again.");
   }
+
 }
 
 // ============================

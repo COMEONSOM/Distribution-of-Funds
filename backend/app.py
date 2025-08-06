@@ -9,8 +9,8 @@ import smtplib
 import os
 
 # 🔧 Initialize Flask app
-app = create_app()
-CORS(app, supports_credentials=True)  # Allow cookies for sessions
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # 🔐 In-memory reset tokens
 reset_tokens = {}
