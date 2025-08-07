@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify, render_template, session
-from backend.db_config import create_app, mysql, get_db_connection
+from backend.db_config import create_app, get_db_connection
+app = create_app()
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from email.message import EmailMessage
 import secrets
 import smtplib
-import os
 
 # 🔧 Initialize Flask app
 app = Flask(__name__)
@@ -262,4 +262,4 @@ If you didn’t request this, you can ignore this email.
 # 🚀 RUN APP
 # ======================
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(debug=True)

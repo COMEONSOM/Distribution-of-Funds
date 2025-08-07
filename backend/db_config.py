@@ -19,7 +19,8 @@ def create_app():
     app.config['MYSQL_PORT'] = int(os.getenv('DB_PORT', 3306))
     app.config['MYSQL_USER'] = os.getenv('DB_USER')
     app.config['MYSQL_PASSWORD'] = os.getenv('DB_PASSWORD')
-    app.config['MYSQL_DB'] = os.getenv('DB_NAME')  # e.g., login_system_emt
+    app.config['MYSQL_DB'] = os.getenv('DB_NAME') # e.g., login_system_emt
+    app.config['MYSQL_SECOND_DB'] = os.getenv('DB_NAME_EXPENSE') 
 
     # Optional: Use SSL certificate for secure connection (Aiven)
     ca_path = os.path.join(os.path.dirname(__file__), 'ca.pem')
