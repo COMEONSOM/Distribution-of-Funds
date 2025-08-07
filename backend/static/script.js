@@ -1,60 +1,72 @@
-// ============================
-// 🌐 BASE URL (Auto for Local + Render)
-// ============================
-const backendUrl = "https://distribution-of-funds.onrender.com";
-const API_BASE = window.location.origin;
+// ======================================
+// 🌐 BASE URL SETUP: Local vs Production
+// ======================================
+const backendUrl = "https://distribution-of-funds.onrender.com"; // Render.com deployment
+const API_BASE = window.location.origin.includes("localhost")
+  ? backendUrl
+  : window.location.origin;
 
-// ============================
-// 🌟 GLOBAL VARIABLES & CACHES
-// ============================
-let users = new Set();
+// ======================================
+// 🌍 GLOBAL DOM REFERENCES & VARIABLES
+// ======================================
+let users = new Set(); // Keeps track of added users (names only)
 
-const authModal = document.getElementById('authModal');
-const toastContainer = document.getElementById('toast-container');
-const summaryDiv = document.getElementById('summary');
-const paidByDropdown = document.getElementById('paid_by');
-const userListContainer = document.getElementById('userList');
+const authModal = document.getElementById("authModal");
+const toastContainer = document.getElementById("toast-container");
+const summaryDiv = document.getElementById("summary");
+const paidByDropdown = document.getElementById("paid_by");
+const userListContainer = document.getElementById("userList");
 
-// ============================
-// 🔁 AUTH MODAL CONTROLS
-// ============================
+// ======================================
+// 🔁 AUTH MODAL CONTROLS (Open/Close/Steps)
+// ======================================
+
+// Show the authentication modal and start at welcome step
 function openAuthModal() {
-  authModal.classList.remove('hidden');
-  showStep('welcome');
+  authModal.classList.remove("hidden");
+  showStep("welcome");
 }
 
+// Close/hide the authentication modal
 function closeAuthModal() {
-  authModal.classList.add('hidden');
+  authModal.classList.add("hidden");
 }
 
+// Close modal when clicking outside modal content
 function modalBackgroundClick(event) {
-  if (event.target.classList.contains('modal')) {
+  if (event.target.classList.contains("modal")) {
     closeAuthModal();
   }
 }
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === "Escape" && !authModal.classList.contains('hidden')) {
+// Listen for Escape key to close modal
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !authModal.classList.contains("hidden")) {
     closeAuthModal();
   }
 });
 
+// Show a specific step in the modal flow
 function showStep(step) {
-  document.querySelectorAll('.step, #authStep').forEach(div => {
-    div.classList.add('hidden');
-    div.classList.remove('active');
+  document.querySelectorAll(".step, #authStep").forEach((div) => {
+    div.classList.add("hidden");
+    div.classList.remove("active");
   });
 
-  const target = step === 'welcome' ? document.getElementById('authStep') : document.getElementById(step + 'Step');
+  const target =
+    step === "welcome"
+      ? document.getElementById("authStep")
+      : document.getElementById(`${step}Step`);
+
   if (target) {
-    target.classList.remove('hidden');
-    target.classList.add('active');
+    target.classList.remove("hidden");
+    target.classList.add("active");
   }
 }
 
-// ============================
-// 🔐 REGISTER USER
-// ============================
+// ======================================
+// 🔐 REGISTER
+// ======================================
 async function registerUser() {
   const name = document.getElementById("registerName").value.trim();
   const email = document.getElementById("registerEmail").value.trim();
@@ -65,35 +77,30 @@ async function registerUser() {
   }
 
   try {
-    const response = await fetch(`${backendUrl}/login`, {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const response = await fetch(`${API_BASE}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
     });
 
-    if (!response.ok) {
-      throw new Error(`Server responded with status ${response.status}`);
+    const data = await response.json();
+
+    if (!response.ok || data.status !== "success") {
+      throw new Error(data.message || "Registration failed");
     }
 
-    const data = await response.json();  // this can fail if server sends HTML
+    showToast("✅ Registered successfully!", "success");
+    showStep("login");
 
-    if (data.status === 'success') {
-      // proceed
-    } else {
-      showToast(data.message);
-    }
   } catch (err) {
-      console.error("Login Error:", err);
-      showToast("Something went wrong during login. Please try again.");
+    console.error("Register Error:", err);
+    showToast("❌ Registration failed: " + err.message, "error");
   }
-
 }
 
-// ============================
-// 🔓 LOGIN USER
-// ============================
+// ======================================
+// 🔓 LOGIN
+// ======================================
 async function loginUser() {
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value.trim();
@@ -111,7 +118,7 @@ async function loginUser() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
     });
 
     const result = await res.json();
@@ -124,62 +131,60 @@ async function loginUser() {
 
     showToast("✅ Logged in successfully!", "success");
     closeAuthModal();
+
     await loadUsers();
     await loadSummary();
 
   } catch (err) {
+    console.error("Login Error:", err);
     loginBtn.disabled = false;
     loginBtn.textContent = "Login";
-    console.error("Login Error:", err);
     showToast("❌ Network error during login.", "error");
   }
 }
 
-// ============================
+// ======================================
 // 🔑 FORGOT PASSWORD
-// ============================
+// ======================================
 async function forgotPassword() {
   const email = document.getElementById("forgotEmail").value.trim();
 
-  if (!email) {
-    return showToast("⚠ Enter your email", "error");
-  }
+  if (!email) return showToast("⚠ Enter your email", "error");
 
   try {
     const res = await fetch(`${API_BASE}/forgot_password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email }),
     });
 
     const result = await res.json();
+
     if (!res.ok || !result.success) {
-      return showToast(`❌ Request failed: ${result.error || res.status}`, "error");
+      return showToast(`❌ Reset failed: ${result.error || res.status}`, "error");
     }
 
     showToast("📧 Reset link sent to your email.", "success");
 
   } catch (err) {
     console.error("Forgot Password Error:", err);
-    showToast("❌ Network error during reset request.", "error");
+    showToast("❌ Network error during password reset.", "error");
   }
 }
 
-// ============================
-// 🚪 LOGOUT USER
-// ============================
+// ======================================
+// 🚪 LOGOUT
+// ======================================
 async function logoutUser() {
   try {
     const res = await fetch(`${API_BASE}/logout`, {
       method: "POST",
-      credentials: "include"
+      credentials: "include",
     });
 
     const result = await res.json();
-    if (!res.ok || !result.success) {
-      return showToast("❌ Logout failed.", "error");
-    }
+    if (!res.ok || !result.success) throw new Error();
 
     users.clear();
     summaryDiv.innerHTML = "";
@@ -188,15 +193,17 @@ async function logoutUser() {
 
   } catch (err) {
     console.error("Logout Error:", err);
-    showToast("❌ Network error during logout.", "error");
+    showToast("❌ Logout failed.", "error");
   }
 }
 
-// ============================
+// ======================================
 // 👥 USER MANAGEMENT
-// ============================
+// ======================================
+
+// Add a new user to the session
 async function addUser() {
-  const nameInput = document.getElementById('newUserName');
+  const nameInput = document.getElementById("newUserName");
   const name = nameInput.value.trim();
 
   if (!name || users.has(name)) {
@@ -208,7 +215,7 @@ async function addUser() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ name })
+      body: JSON.stringify({ name }),
     });
 
     const result = await res.json();
@@ -218,14 +225,16 @@ async function addUser() {
     updatePaidByDropdown();
     renderUserList();
     nameInput.value = "";
+
     showToast("✅ User added!", "success");
 
   } catch (err) {
     console.error("Add User Error:", err);
-    showToast(`❌ Error adding user: ${err.message}`, "error");
+    showToast("❌ Error adding user: " + err.message, "error");
   }
 }
 
+// Load existing users from the backend
 async function loadUsers() {
   try {
     const res = await fetch(`${API_BASE}/users`, { credentials: "include" });
@@ -238,31 +247,33 @@ async function loadUsers() {
     const data = await res.json();
     if (!res.ok || !Array.isArray(data)) throw new Error(`HTTP ${res.status}`);
 
-    users = new Set(data.map(u => u.name));
+    users = new Set(data.map((u) => u.name));
     updatePaidByDropdown();
     renderUserList();
 
   } catch (err) {
     console.error("Load Users Error:", err);
-    showToast(`❌ Could not load users: ${err.message}`, "error");
+    showToast("❌ Could not load users: " + err.message, "error");
   }
 }
 
+// Update the 'Who Paid?' dropdown
 function updatePaidByDropdown() {
   paidByDropdown.innerHTML = '<option value="">Who Paid?</option>';
-  users.forEach(name => {
-    const option = document.createElement('option');
+  users.forEach((name) => {
+    const option = document.createElement("option");
     option.value = name;
     option.textContent = name;
     paidByDropdown.appendChild(option);
   });
 }
 
+// Render list of user input fields for owed amount
 function renderUserList() {
   userListContainer.innerHTML = "";
-  users.forEach(name => {
-    const div = document.createElement('div');
-    div.classList.add('user-row');
+  users.forEach((name) => {
+    const div = document.createElement("div");
+    div.classList.add("user-row");
     div.innerHTML = `
       <label>${name}</label>
       <input type="number" class="owed-input" data-username="${name}" placeholder="Amount owed by ${name}" step="0.01" required>
@@ -271,10 +282,10 @@ function renderUserList() {
   });
 }
 
-// ============================
-// 💾 ADD EXPENSE
-// ============================
-document.getElementById('expenseForm').addEventListener('submit', async function (e) {
+// ======================================
+// 💸 ADD EXPENSE
+// ======================================
+document.getElementById("expenseForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
   const title = this.title.value.trim();
@@ -289,7 +300,7 @@ document.getElementById('expenseForm').addEventListener('submit', async function
   const distribution = {};
   let valid = true;
 
-  document.querySelectorAll('.owed-input').forEach(input => {
+  document.querySelectorAll(".owed-input").forEach((input) => {
     const user = input.dataset.username;
     const owed = parseFloat(input.value);
     if (isNaN(owed)) valid = false;
@@ -298,19 +309,17 @@ document.getElementById('expenseForm').addEventListener('submit', async function
 
   const totalOwed = Object.values(distribution).reduce((sum, val) => sum + val, 0);
   if (Math.abs(totalOwed - amount) > 0.01) {
-    return showToast(`⚠ Total owed (${totalOwed}) != Total amount (${amount})`, "error");
+    return showToast(`⚠ Total owed (${totalOwed}) ≠ Total amount (${amount})`, "error");
   }
 
-  if (!valid) {
-    return showToast("⚠ Enter valid owed amounts.", "error");
-  }
+  if (!valid) return showToast("⚠ Enter valid owed amounts.", "error");
 
   try {
     const res = await fetch(`${API_BASE}/add_expense`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ title, location, amount, paid_by: paidBy, distribution })
+      body: JSON.stringify({ title, location, amount, paid_by: paidBy, distribution }),
     });
 
     const result = await res.json();
@@ -323,13 +332,13 @@ document.getElementById('expenseForm').addEventListener('submit', async function
 
   } catch (err) {
     console.error("Add Expense Error:", err);
-    showToast(`❌ Failed to save expense: ${err.message}`, "error");
+    showToast("❌ Failed to save expense: " + err.message, "error");
   }
 });
 
-// ============================
-// 📊 LOAD SUMMARY
-// ============================
+// ======================================
+// 📊 LOAD SUMMARY DATA
+// ======================================
 async function loadSummary() {
   try {
     const res = await fetch(`${API_BASE}/summary`, { credentials: "include" });
@@ -349,10 +358,11 @@ async function loadSummary() {
 
   } catch (err) {
     console.error("Load Summary Error:", err);
-    showToast(`❌ Could not load summary: ${err.message}`, "error");
+    showToast("❌ Could not load summary: " + err.message, "error");
   }
 }
 
+// Render summary HTML from backend data
 function renderSummaryHTML(data) {
   const { total_expense, net_contributions, settlements_statements } = data;
 
@@ -366,9 +376,9 @@ function renderSummaryHTML(data) {
   `;
 }
 
-// ============================
-// 🗑️ DELETE HISTORY
-// ============================
+// ======================================
+// 🗑️ DELETE EXPENSE HISTORY
+// ======================================
 async function deleteHistory() {
   if (!confirm("⚠️ Are you sure? This will permanently delete all your expenses.")) {
     return;
@@ -382,25 +392,24 @@ async function deleteHistory() {
 
     const result = await res.json();
     if (!res.ok || !result.success) {
-      return showToast(`❌ Delete failed: ${result.error || res.status}`, "error");
+      return showToast("❌ Delete failed: " + (result.error || res.status), "error");
     }
 
     showToast("🗑️ All expense history deleted.", "success");
     summaryDiv.innerHTML = "<p>🗑️ No expenses found.</p>";
-
     users.clear();
     updatePaidByDropdown();
     renderUserList();
 
   } catch (err) {
     console.error("Delete History Error:", err);
-    showToast("❌ Network or server error during delete.", "error");
+    showToast("❌ Network error during delete.", "error");
   }
 }
 
-// ============================
-// 🔔 TOAST SYSTEM
-// ============================
+// ======================================
+// 🔔 TOAST SYSTEM FOR NOTIFICATIONS
+// ======================================
 function showToast(message, type = "success") {
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
