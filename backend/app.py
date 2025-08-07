@@ -14,13 +14,23 @@ import os
 
 
 # Import local modules
-from backend.db_config import create_app, get_db_connection
+from backend.db_config import create_app, get_db_connection, mysql
 
 # ============================
 # 🔧 Initialize Flask App
 # ============================
 app = create_app()
 CORS(app, resources={r"/*": {"origins": "*"}})  # Allow cross-origin requests (adjust for production)
+
+# Safely handle teardown
+@app.teardown_appcontext
+def teardown_db(exception):
+    try:
+        if hasattr(mysql, 'connection'):
+            mysql.connection.close()
+    except Exception as e:
+        # Log or ignore
+        print("Teardown error (ignored):", e)
 
 # Store password reset tokens temporarily (in-memory)
 reset_tokens = {}
@@ -290,6 +300,6 @@ If you didn’t request this, please ignore this email.
 # ========================
 # ▶️ Run the Flask App
 # ========================
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))  # 5000 is local fallback
+    app.run(host="0.0.0.0", port=port)
